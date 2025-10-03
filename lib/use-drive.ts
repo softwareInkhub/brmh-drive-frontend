@@ -190,7 +190,7 @@ export function useDeleteItem() {
       } else {
         const response = await driveApi.deleteFolder(itemId);
         console.log('Delete folder response:', response);
-        return response.data!;
+        return response;
       }
     },
     onSuccess: (data, variables) => {

@@ -216,8 +216,8 @@ export const useUIStore = create<UIState>()(
         const tabs = state.tabState.tabs.filter(tab => tab.id !== tabId);
         
         // Add the closed tab to the closedTabs set
-        const currentClosedTabs = state.closedTabs instanceof Set ? state.closedTabs : new Set();
-        const newClosedTabs = new Set(currentClosedTabs);
+        const currentClosedTabs = state.closedTabs instanceof Set ? state.closedTabs : new Set<string>();
+        const newClosedTabs = new Set<string>(currentClosedTabs);
         newClosedTabs.add(tabId);
         
         if (tabs.length === 0) {

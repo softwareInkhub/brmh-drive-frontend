@@ -15,8 +15,8 @@ async function deleteFolderExample() {
     
     const response = await driveApi.deleteFolder(folderId);
     
-    if (response.success && response.data) {
-      const deleteData: DeleteFolderResponse = response.data;
+    if (response.success) {
+      const deleteData: DeleteFolderResponse = response;
       
       console.log('✅ Folder deleted successfully!');
       console.log(`📁 Folder: ${deleteData.folderName}`);

@@ -370,7 +370,7 @@ export const driveApi = new (class DriveApiClient {
       
       return {
         success: response.success,
-        data: { message: response.success ? 'Folder renamed successfully' : ('error' in response ? response.error : 'Failed to rename folder') },
+        data: { message: response.success ? 'Folder renamed successfully' : ('error' in response ? (typeof response.error === 'string' ? response.error : 'Failed to rename folder') : 'Failed to rename folder') },
       };
     } catch (error: unknown) {
       console.error('Error renaming folder:', error);

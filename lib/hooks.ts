@@ -97,7 +97,7 @@ export function useSearchItems(query: string) {
       const searchTerm = query.toLowerCase();
       return allItems.filter(item => 
         item.name.toLowerCase().includes(searchTerm) ||
-        (item.owner && item.owner.toLowerCase().includes(searchTerm))
+        (item.ownerId && item.ownerId.toLowerCase().includes(searchTerm))
       );
     },
     enabled: !!query.trim(),
