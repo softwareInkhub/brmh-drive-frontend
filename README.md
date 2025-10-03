@@ -151,8 +151,6 @@ Create a `.env.local` file in the root directory:
 
 ```env
 # Optional: Add your environment variables here
-NEXT_PUBLIC_APP_NAME=BRMH Drive
-NEXT_PUBLIC_APP_VERSION=1.0.0
 ```
 
 ### Tailwind Configuration
