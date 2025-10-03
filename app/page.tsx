@@ -8,9 +8,10 @@ import { FileTile } from '@/components/ui/file-tile';
 import { FileTable } from '@/components/ui/file-table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 
-export default function HomePage() {
+function HomePageContent() {
   const { data: folderContents, isLoading, error } = useFolderContents('ROOT');
   const viewMode = useViewMode();
   const selectedIds = useSelectedIds();
@@ -23,9 +24,14 @@ export default function HomePage() {
 
   // Sync search query from URL parameters
   useEffect(() => {
-    const urlQuery = searchParams.get('q');
-    if (urlQuery !== null && urlQuery !== searchQuery) {
-      setSearchQuery(urlQuery);
+    try {
+      const urlQuery = searchParams.get('q');
+      if (urlQuery !== null && urlQuery !== searchQuery) {
+        setSearchQuery(urlQuery);
+      }
+    } catch (error) {
+      // Handle case where searchParams is not available during SSR
+      console.warn('Search params not available during SSR:', error);
     }
   }, [searchParams, searchQuery, setSearchQuery]);
 
@@ -219,4 +225,25 @@ export default function HomePage() {
       )}
     </div>
   );
+}
+
+const DynamicHomePageContent = dynamic(() => Promise.resolve(HomePageContent), {
+  ssr: false,
+  loading: () => (
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="space-y-3 sm:space-y-4">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-4 w-48" />
+      </div>
+      <div className="brmh-grid">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+      </div>
+    </div>
+  )
+});
+
+export default function HomePage() {
+  return <DynamicHomePageContent />;
 }

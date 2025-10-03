@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { useSearchItems } from '@/lib/hooks';
 import { useFolderContents } from '@/lib/use-drive';
 import { useViewMode, useSelectedIds, useSearchQuery, useSetSearchQuery, useSortOption } from '@/lib/store-client';
@@ -11,8 +11,9 @@ import { FileTable } from '@/components/ui/file-table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
 import { sortItems } from '@/lib/sorting';
+import dynamic from 'next/dynamic';
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchQuery = useSearchQuery();
   const setSearchQuery = useSetSearchQuery();
   const searchParams = useSearchParams();
@@ -25,11 +26,16 @@ export default function SearchPage() {
 
   // Handle URL search parameters for mobile search
   useEffect(() => {
-    const urlQuery = searchParams.get('q');
-    if (urlQuery && isInitialLoad.current) {
-      // Only set from URL on initial load
-      setSearchQuery(urlQuery);
-      isInitialLoad.current = false;
+    try {
+      const urlQuery = searchParams.get('q');
+      if (urlQuery && isInitialLoad.current) {
+        // Only set from URL on initial load
+        setSearchQuery(urlQuery);
+        isInitialLoad.current = false;
+      }
+    } catch (error) {
+      // Handle case where searchParams is not available during SSR
+      console.warn('Search params not available during SSR:', error);
     }
   }, [searchParams, setSearchQuery]);
 
@@ -253,4 +259,25 @@ export default function SearchPage() {
       )}
     </div>
   );
+}
+
+const DynamicSearchPageContent = dynamic(() => Promise.resolve(SearchPageContent), {
+  ssr: false,
+  loading: () => (
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="space-y-3 sm:space-y-4">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-4 w-48" />
+      </div>
+      <div className="brmh-grid">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+      </div>
+    </div>
+  )
+});
+
+export default function SearchPage() {
+  return <DynamicSearchPageContent />;
 }

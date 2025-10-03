@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 import { TabBar } from './tab-bar';
@@ -16,7 +16,7 @@ interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+function MainLayoutContent({ children }: MainLayoutProps) {
   const sidebarCollapsed = useSidebarCollapsed();
   const setSidebarCollapsed = useSetSidebarCollapsed();
   const [isMobile, setIsMobile] = useState(false);
@@ -96,5 +96,25 @@ export function MainLayout({ children }: MainLayoutProps) {
     {/* Modal Manager */}
     <ModalManager />
     </GlobalUploadDropzone>
+  );
+}
+
+export function MainLayout({ children }: MainLayoutProps) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background">
+        <div className="flex h-screen">
+          <div className="w-64 bg-sidebar border-r border-border" />
+          <div className="flex-1 flex flex-col">
+            <div className="h-16 border-b border-border" />
+            <div className="flex-1 p-6">
+              {children}
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <MainLayoutContent>{children}</MainLayoutContent>
+    </Suspense>
   );
 }
