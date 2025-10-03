@@ -61,7 +61,7 @@ export type ModalState = {
     | ID
     | boolean
     | { id: ID; type: 'file' | 'folder'; name?: string }
-    | { file: any; files?: any[]; currentIndex?: number };
+    | { file: FileItem; files?: FileItem[]; currentIndex?: number };
 };
 
 // Tab system types

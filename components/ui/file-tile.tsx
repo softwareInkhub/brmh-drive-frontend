@@ -114,7 +114,11 @@ export function FileTile({ file, isSelected, onSelect }: FileTileProps) {
               >
                 Download file
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openModal('rename', { id: file.id, type: 'file', name: file.name }); }}>
+              <DropdownMenuItem onClick={(e) => { 
+                e.stopPropagation(); 
+                const renameData = { id: file.id, type: 'file' as const, name: file.name };
+                openModal('rename', renameData);
+              }}>
                 Rename file
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openModal('share', file.id); }}>

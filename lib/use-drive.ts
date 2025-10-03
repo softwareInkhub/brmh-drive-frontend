@@ -34,8 +34,8 @@ export function useFolderContents(folderId: ID | 'ROOT' = 'ROOT') {
         ]);
         
         return {
-          folders: (foldersResponse.data || []) as any,
-          files: (filesResponse.data || []) as any,
+          folders: foldersResponse.data || [],
+          files: filesResponse.data || [],
           path: [{ id: 'ROOT', name: 'My BRMH Drive' }],
         };
       } else {

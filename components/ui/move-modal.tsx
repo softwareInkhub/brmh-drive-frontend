@@ -33,8 +33,6 @@ export function MoveModal({ open, onOpenChange, itemId, itemType }: MoveModalPro
     await moveMutation.mutateAsync({
       itemId,
       newParentId: destinationId,
-      isFile: itemType === 'file',
-      currentParentId: currentFolderId,
     });
     onOpenChange(false);
   };

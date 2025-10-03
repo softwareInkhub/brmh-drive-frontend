@@ -31,9 +31,9 @@ export function ModalManager() {
             closeModal('rename');
           }
         }}
-        itemId={typeof modals.rename === 'object' ? modals.rename.id : undefined}
-        itemType={typeof modals.rename === 'object' ? modals.rename.type : undefined}
-        itemName={typeof modals.rename === 'object' ? (modals.rename as any).name : undefined}
+        itemId={typeof modals.rename === 'object' && 'id' in modals.rename ? modals.rename.id : undefined}
+        itemType={typeof modals.rename === 'object' && 'type' in modals.rename ? modals.rename.type : undefined}
+        itemName={typeof modals.rename === 'object' && 'name' in modals.rename ? modals.rename.name : undefined}
       />
 
       {/* Move Modal */}
@@ -44,8 +44,8 @@ export function ModalManager() {
             closeModal('move');
           }
         }}
-        itemId={typeof modals.move === 'object' ? modals.move.id : undefined}
-        itemType={typeof modals.move === 'object' ? modals.move.type : undefined}
+        itemId={typeof modals.move === 'object' && 'id' in modals.move ? modals.move.id : undefined}
+        itemType={typeof modals.move === 'object' && 'type' in modals.move ? modals.move.type : undefined}
       />
 
     </>

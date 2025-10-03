@@ -6,6 +6,7 @@ import { FolderCard } from '@/components/ui/folder-card';
 import { FileTile } from '@/components/ui/file-tile';
 import { FileTable } from '@/components/ui/file-table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DriveFolder, DriveFile } from '@/lib/drive-types';
 
 export default function SharedPage() {
   const { data: sharedData, isLoading, error } = useSharedWithMe();
@@ -104,8 +105,8 @@ export default function SharedPage() {
         </div>
       ) : (
         <FileTable
-          folders={folders.map(item => item.item)}
-          files={files.map(item => item.item)}
+          folders={folders.map(item => item.item as DriveFolder)}
+          files={files.map(item => item.item as DriveFile)}
           selectedIds={selectedIds}
         />
       )}

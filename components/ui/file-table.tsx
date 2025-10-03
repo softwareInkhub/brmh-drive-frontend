@@ -181,7 +181,11 @@ export function FileTable({ folders, files, selectedIds, onSelect }: FileTablePr
                           Download file
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openModal('rename', { id: item.id, type: item.type as 'file' | 'folder', name: item.name }); }}>
+                      <DropdownMenuItem onClick={(e) => { 
+                        e.stopPropagation(); 
+                        const renameData = { id: item.id, type: item.type as 'file' | 'folder', name: item.name };
+                        openModal('rename', renameData);
+                      }}>
                         {item.type === 'folder' ? 'Rename folder' : 'Rename file'}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openModal('share', item.id); }}>

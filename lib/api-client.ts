@@ -20,6 +20,17 @@ import {
   SharePayload,
 } from './drive-types';
 
+export class DriveApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public details?: string
+  ) {
+    super(message);
+    this.name = 'DriveApiError';
+  }
+}
+
 async function request<T>(endpoint: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${endpoint}`, {
     cache: 'no-store',
@@ -121,15 +132,16 @@ export const driveApi = new (class DriveApiClient {
     try {
       console.log('Using multipart upload (most efficient approach)...');
       return await this.uploadFileWithMultipart(file, parentId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Multipart upload failed:', error);
       
       // Provide helpful error messages for common issues
-      if (error.message.includes('413') || error.message.includes('Request Entity Too Large')) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('413') || errorMessage.includes('Request Entity Too Large')) {
         throw new Error(`File too large for server (${(file.size / 1024 / 1024).toFixed(1)}MB). Your production server has a file size limit. Please contact your server administrator to increase upload limits.`);
-      } else if (error.message.includes('CORS')) {
+      } else if (errorMessage.includes('CORS')) {
         throw new Error(`CORS error: Your production server needs to allow requests from ${window.location.origin}. Please contact your server administrator.`);
-      } else if (error.message.includes('Failed to fetch')) {
+      } else if (errorMessage.includes('Failed to fetch')) {
         throw new Error(`Network error: Cannot reach server at ${API_BASE}. Check if the server is running and accessible.`);
       }
       
@@ -197,10 +209,10 @@ export const driveApi = new (class DriveApiClient {
     if (Array.isArray(response)) {
       return { success: true, data: response } as ApiResponse<DriveFile[]>;
     }
-    if ((response as any).files) {
-      return { success: true, data: (response as any).files } as ApiResponse<DriveFile[]>;
+    if ('files' in response && Array.isArray(response.files)) {
+      return { success: true, data: response.files } as ApiResponse<DriveFile[]>;
     }
-    if ((response as any).success !== undefined) {
+    if ('success' in response) {
       return response as ApiResponse<DriveFile[]>;
     }
     return { success: true, data: [] } as ApiResponse<DriveFile[]>;
@@ -278,10 +290,10 @@ export const driveApi = new (class DriveApiClient {
     if (Array.isArray(response)) {
       return { success: true, data: response } as ApiResponse<DriveFolder[]>;
     }
-    if ((response as any).folders) {
-      return { success: true, data: (response as any).folders } as ApiResponse<DriveFolder[]>;
+    if ('folders' in response && Array.isArray(response.folders)) {
+      return { success: true, data: response.folders } as ApiResponse<DriveFolder[]>;
     }
-    if ((response as any).success !== undefined) {
+    if ('success' in response) {
       return response as ApiResponse<DriveFolder[]>;
     }
     return { success: true, data: [] } as ApiResponse<DriveFolder[]>;
@@ -311,7 +323,7 @@ export const driveApi = new (class DriveApiClient {
         currentId = currentFolder.parentId;
       }
       // Prepend root
-      path.unshift({ id: 'ROOT', name: 'My BRMH Drive' as any });
+      path.unshift({ id: 'ROOT', name: 'My BRMH Drive' });
     } catch (error) {
       // Fallback to single-level path if anything fails
       try {
@@ -358,14 +370,14 @@ export const driveApi = new (class DriveApiClient {
       
       return {
         success: response.success,
-        data: { message: response.success ? 'Folder renamed successfully' : (response as any).error || 'Failed to rename folder' },
+        data: { message: response.success ? 'Folder renamed successfully' : ('error' in response ? response.error : 'Failed to rename folder') },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error renaming folder:', error);
       return {
         success: false,
-        error: error.message || 'An unexpected error occurred while renaming the folder',
-      } as any;
+        error: error instanceof Error ? error.message : 'An unexpected error occurred while renaming the folder',
+      };
     }
   }
 
@@ -390,11 +402,11 @@ export const driveApi = new (class DriveApiClient {
       });
 
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error in deleteFolder:', error);
       return {
         success: false,
-        error: error.message || 'An unexpected error occurred while deleting the folder',
+        error: error instanceof Error ? error.message : 'An unexpected error occurred while deleting the folder',
         folderId: folderId,
         folderName: 'Unknown',
         deletedAt: new Date().toISOString(),

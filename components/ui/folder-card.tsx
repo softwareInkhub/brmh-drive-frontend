@@ -94,7 +94,11 @@ export function FolderCard({ folder, isSelected, onSelect }: FolderCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openModal('rename', { id: folder.id, type: 'folder', name: folder.name }); }}>
+              <DropdownMenuItem onClick={(e) => { 
+                e.stopPropagation(); 
+                const renameData = { id: folder.id, type: 'folder' as const, name: folder.name };
+                openModal('rename', renameData);
+              }}>
                 Rename folder
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openModal('share', folder.id); }}>

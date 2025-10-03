@@ -34,7 +34,7 @@ export function UploadDropzone({
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: unknown[]) => {
     // Handle rejected files
     if (rejectedFiles.length > 0) {
       console.warn('Some files were rejected:', rejectedFiles);

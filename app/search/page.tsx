@@ -5,7 +5,6 @@ import { useSearchItems } from '@/lib/hooks';
 import { useFolderContents } from '@/lib/use-drive';
 import { useViewMode, useSelectedIds, useSearchQuery, useSetSearchQuery, useSortOption } from '@/lib/store-client';
 import { useSearchParams } from 'next/navigation';
-import { FolderItem, FileItem } from '@/lib/types';
 import { FolderCard } from '@/components/ui/folder-card';
 import { FileTile } from '@/components/ui/file-tile';
 import { FileTable } from '@/components/ui/file-table';
@@ -213,8 +212,8 @@ export default function SearchPage() {
     );
   }
 
-  const folders = searchResults.filter(item => item.type === 'folder') as FolderItem[];
-  const files = searchResults.filter(item => item.type === 'file') as FileItem[];
+  const folders = searchResults.filter(item => item.type === 'folder');
+  const files = searchResults.filter(item => item.type === 'file');
 
   return (
     <div className="p-6 space-y-6">
