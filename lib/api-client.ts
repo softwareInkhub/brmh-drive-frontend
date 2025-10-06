@@ -31,25 +31,77 @@ export class DriveApiError extends Error {
   }
 }
 
+// Helper function to get auth token from cookies or localStorage
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  // Check cookies first (SSO method)
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('access_token='))
+    ?.split('=')[1];
+  
+  return cookieToken || localStorage.getItem('access_token');
+}
+
 async function request<T>(endpoint: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    cache: 'no-store',
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-cache',
-      Pragma: 'no-cache',
-    },
-    ...init,
-  });
-  // Some backends may return 304 for GETs with no body; treat as empty success
-  if (res.status === 304) {
-    return {} as T;
+  const authToken = getAuthToken();
+  
+  // Build headers carefully to avoid CORS issues
+  const headers: Record<string, string> = {};
+  
+  // Only add Content-Type for non-FormData requests
+  if (!(init?.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
   }
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API ${endpoint} failed: ${res.status} ${text}`);
+
+  // Add auth header if token is available
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
   }
-  return res.json() as Promise<T>;
+
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      ...init,
+      headers: {
+        ...headers,
+        ...(init?.headers || {}),
+      },
+    });
+
+    // Some backends may return 304 for GETs with no body; treat as empty success
+    if (res.status === 304) {
+      return {} as T;
+    }
+    
+    if (!res.ok) {
+      const text = await res.text();
+      throw new DriveApiError(`API ${endpoint} failed: ${res.status} ${text}`, res.status, text);
+    }
+    
+    return res.json() as Promise<T>;
+  } catch (error) {
+    // Handle CORS and network errors more gracefully
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new DriveApiError(
+        `Network error: Cannot reach server at ${API_BASE}. This might be a CORS issue or the server might be down.`,
+        0,
+        'Network Error'
+      );
+    }
+    
+    // Re-throw DriveApiError instances
+    if (error instanceof DriveApiError) {
+      throw error;
+    }
+    
+    // Wrap other errors
+    throw new DriveApiError(
+      error instanceof Error ? error.message : 'Unknown error occurred',
+      0,
+      'Unknown Error'
+    );
+  }
 }
 
 /**
@@ -169,15 +221,21 @@ export const driveApi = new (class DriveApiClient {
         console.log(`${key}:`, value);
       }
     
+    // Get auth token for authenticated upload
+    const authToken = getAuthToken();
+    const headers: Record<string, string> = {};
+
+    // Add auth header if token is available
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
     const response = await fetch(`${API_BASE}${API_ENDPOINTS.UPLOAD}`, {
       method: 'POST',
       body: formData,
-        // Don't set Content-Type header for FormData - let browser set it with boundary
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
-      });
+      // Don't set Content-Type header for FormData - let browser set it with boundary
+      headers,
+    });
 
       console.log('Multipart upload response:', {
         status: response.status,

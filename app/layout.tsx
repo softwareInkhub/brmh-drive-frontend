@@ -1,20 +1,21 @@
-import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
-import { ThemeProvider } from "next-themes";
-import { Toaster } from "@/components/ui/sonner";
-import { ReactQueryProvider } from "@/lib/react-query";
-import { MainLayout } from "@/components/layout/main-layout";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Montserrat } from 'next/font/google';
+import { ThemeProvider } from 'next-themes';
+import { Toaster } from '@/components/ui/sonner';
+import { AuthProvider } from '@/lib/auth-context';
+import { ReactQueryProvider } from '@/lib/react-query';
+import { MainLayout } from '@/components/layout/main-layout';
+import './globals.css';
 
 const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  variable: '--font-montserrat',
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
-  title: "BRMH Drive",
-  description: "Your personal cloud storage solution",
+  title: 'BRMH Drive',
+  description: 'Your personal cloud storage solution',
 };
 
 export default function RootLayout({
@@ -31,12 +32,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ReactQueryProvider>
-            <MainLayout>
-              {children}
-            </MainLayout>
-            <Toaster />
-          </ReactQueryProvider>
+          <AuthProvider>
+            <ReactQueryProvider>
+              <MainLayout>{children}</MainLayout>
+              <Toaster />
+            </ReactQueryProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

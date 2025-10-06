@@ -21,7 +21,8 @@ export interface SSOUser {
 
 export class SSOUtils {
   private static readonly AUTH_DOMAIN = 'https://auth.brmh.in';
-  private static readonly API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://brmh.in';
+  private static readonly API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || 'https://brmh.in';
   private static readonly COOKIE_DOMAIN = '.brmh.in';
 
   /**
@@ -29,7 +30,7 @@ export class SSOUtils {
    */
   static isAuthenticated(): boolean {
     if (typeof document === 'undefined') return false;
-    
+
     const cookies = this.getCookies();
     return !!(cookies.access_token || cookies.id_token);
   }
@@ -39,7 +40,7 @@ export class SSOUtils {
    */
   static getCookies(): Record<string, string> {
     if (typeof document === 'undefined') return {};
-    
+
     return document.cookie.split(';').reduce((acc, cookie) => {
       const [key, value] = cookie.trim().split('=');
       if (key && value) {
@@ -74,7 +75,9 @@ export class SSOUtils {
         sub: payload.sub,
         email: payload.email,
         email_verified: payload.email_verified,
-        name: payload.name || `${payload.given_name || ''} ${payload.family_name || ''}`.trim(),
+        name:
+          payload.name ||
+          `${payload.given_name || ''} ${payload.family_name || ''}`.trim(),
         given_name: payload.given_name,
         family_name: payload.family_name,
         picture: payload.picture,
@@ -96,7 +99,7 @@ export class SSOUtils {
       const response = await fetch(`${this.API_BASE_URL}/auth/validate`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${tokenToValidate}`,
+          Authorization: `Bearer ${tokenToValidate}`,
           'Content-Type': 'application/json',
         },
         credentials: 'include',
@@ -112,12 +115,13 @@ export class SSOUtils {
    * Redirect to auth.brmh.in for login
    */
   static redirectToLogin(returnUrl?: string): void {
-    const currentUrl = returnUrl || (typeof window !== 'undefined' ? window.location.href : '');
+    const currentUrl =
+      returnUrl || (typeof window !== 'undefined' ? window.location.href : '');
     const loginUrl = new URL('/login', this.AUTH_DOMAIN);
     if (currentUrl) {
       loginUrl.searchParams.set('next', currentUrl);
     }
-    
+
     if (typeof window !== 'undefined') {
       window.location.href = loginUrl.toString();
     }
@@ -128,7 +132,7 @@ export class SSOUtils {
    */
   static async logout(returnUrl?: string): Promise<void> {
     const tokens = this.getTokens();
-    
+
     // Call backend logout endpoint
     try {
       await fetch(`${this.API_BASE_URL}/auth/logout`, {
@@ -147,11 +151,18 @@ export class SSOUtils {
     // Clear localStorage (for backward compatibility)
     if (typeof window !== 'undefined') {
       const keysToRemove = [
-        'access_token', 'id_token', 'refresh_token',
-        'accessToken', 'idToken', 'refreshToken',
-        'user', 'user_id', 'user_email', 'user_name'
+        'access_token',
+        'id_token',
+        'refresh_token',
+        'accessToken',
+        'idToken',
+        'refreshToken',
+        'user',
+        'user_id',
+        'user_email',
+        'user_name',
       ];
-      keysToRemove.forEach(key => {
+      keysToRemove.forEach((key) => {
         try {
           localStorage.removeItem(key);
           sessionStorage.removeItem(key);
@@ -166,7 +177,7 @@ export class SSOUtils {
     if (returnUrl) {
       logoutUrl.searchParams.set('next', returnUrl);
     }
-    
+
     if (typeof window !== 'undefined') {
       window.location.href = logoutUrl.toString();
     }
@@ -179,7 +190,7 @@ export class SSOUtils {
     if (typeof document === 'undefined') return;
 
     const cookiesToClear = ['access_token', 'id_token', 'refresh_token'];
-    cookiesToClear.forEach(cookieName => {
+    cookiesToClear.forEach((cookieName) => {
       // Clear for current domain
       document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
       // Clear for .brmh.in domain
@@ -250,16 +261,71 @@ export class SSOUtils {
   }
 
   /**
+   * Logout user
+   */
+  static async logout(): Promise<void> {
+    try {
+      const tokens = this.getTokens();
+
+      // Call backend logout endpoint to revoke tokens
+      if (tokens.refreshToken) {
+        await fetch(`${this.API_BASE_URL}/auth/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ refresh_token: tokens.refreshToken }),
+        });
+      }
+
+      // Clear all auth data
+      this.clearCookies();
+      this.clearLocalStorage();
+    } catch (error) {
+      console.error('[SSO] Logout failed:', error);
+      // Clear data anyway
+      this.clearCookies();
+      this.clearLocalStorage();
+    }
+  }
+
+  /**
+   * Clear localStorage auth data
+   */
+  static clearLocalStorage(): void {
+    if (typeof localStorage === 'undefined') return;
+
+    const keysToRemove = [
+      'access_token',
+      'accessToken',
+      'id_token',
+      'idToken',
+      'refresh_token',
+      'refreshToken',
+      'user',
+      'user_id',
+      'user_email',
+      'user_name',
+    ];
+
+    keysToRemove.forEach((key) => {
+      localStorage.removeItem(key);
+    });
+  }
+
+  /**
    * Initialize SSO for an app (call this on app startup)
    */
-  static async initialize(): Promise<{ isAuthenticated: boolean; user: SSOUser | null }> {
+  static async initialize(): Promise<{
+    isAuthenticated: boolean;
+    user: SSOUser | null;
+  }> {
     // Check if authenticated via cookies
     const isAuthenticated = this.isAuthenticated();
-    
+
     if (isAuthenticated) {
       // Sync tokens to localStorage for backward compatibility
       this.syncTokensToLocalStorage();
-      
+
       // Validate token
       const isValid = await this.validateToken();
       if (!isValid) {
@@ -270,7 +336,7 @@ export class SSOUtils {
           return { isAuthenticated: false, user: null };
         }
       }
-      
+
       const user = this.getUser();
       return { isAuthenticated: true, user };
     }

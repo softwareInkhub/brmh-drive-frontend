@@ -1,26 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchQuery, useSetSearchQuery, useOpenModal } from '@/lib/store-client';
+import {
+  useSearchQuery,
+  useSetSearchQuery,
+  useOpenModal,
+} from '@/lib/store-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  Search, 
-  Plus, 
-  HelpCircle, 
-  Bell,
-  User,
-  Menu,
-  X,
-  XCircle
-} from 'lucide-react';
+import { Search, Plus, HelpCircle, Bell, Menu, X, XCircle } from 'lucide-react';
+import { UserProfileDropdown } from '@/components/ui/user-profile-dropdown';
 
 interface TopbarProps {
   isMobile?: boolean;
@@ -28,7 +24,11 @@ interface TopbarProps {
   onMobileMenuToggle?: () => void;
 }
 
-export function Topbar({ isMobile = false, mobileMenuOpen = false, onMobileMenuToggle }: TopbarProps) {
+export function Topbar({
+  isMobile = false,
+  mobileMenuOpen = false,
+  onMobileMenuToggle,
+}: TopbarProps) {
   const searchQuery = useSearchQuery();
   const setSearchQuery = useSetSearchQuery();
   const openModal = useOpenModal();
@@ -94,7 +94,10 @@ export function Topbar({ isMobile = false, mobileMenuOpen = false, onMobileMenuT
             >
               <X className="w-5 h-5" />
             </Button>
-            <form onSubmit={handleMobileSearchSubmit} className="flex-1 mx-3 relative">
+            <form
+              onSubmit={handleMobileSearchSubmit}
+              className="flex-1 mx-3 relative"
+            >
               <Input
                 placeholder="Search in Drive"
                 value={searchQuery}
@@ -143,7 +146,13 @@ export function Topbar({ isMobile = false, mobileMenuOpen = false, onMobileMenuT
           {/* Desktop Search (Left side) */}
           {!isMobile && (
             <div className="max-w-xl w-96">
-              <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmit(); }} className="relative">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSearchSubmit();
+                }}
+                className="relative"
+              >
                 <Input
                   placeholder="Search in Drive"
                   value={searchQuery}
@@ -176,52 +185,46 @@ export function Topbar({ isMobile = false, mobileMenuOpen = false, onMobileMenuT
           )}
         </div>
 
+        {/* Right: Actions */}
+        <div className="flex items-center space-x-1 sm:space-x-2">
+          {/* Mobile Search Button */}
+          {isMobile && !showMobileSearch && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="shrink-0"
+              onClick={handleMobileSearchClick}
+            >
+              <Search className="w-4 h-4" />
+            </Button>
+          )}
 
-
-      {/* Right: Actions */}
-      <div className="flex items-center space-x-1 sm:space-x-2">
-        {/* Mobile Search Button */}
-        {isMobile && !showMobileSearch && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="shrink-0"
-            onClick={handleMobileSearchClick}
+          {/* New Button */}
+          <Button
+            onClick={handleNewClick}
+            className="bg-primary hover:bg-primary/90 shrink-0"
+            size={isMobile ? 'sm' : 'default'}
           >
-            <Search className="w-4 h-4" />
+            <Plus className="w-4 h-4 sm:mr-2" />
+            {!isMobile && 'New'}
           </Button>
-        )}
 
+          {/* Help (Hidden on mobile) */}
+          {!isMobile && (
+            <Button variant="ghost" size="sm">
+              <HelpCircle className="w-4 h-4" />
+            </Button>
+          )}
 
-        {/* New Button */}
-        <Button 
-          onClick={handleNewClick} 
-          className="bg-primary hover:bg-primary/90 shrink-0"
-          size={isMobile ? "sm" : "default"}
-        >
-          <Plus className="w-4 h-4 sm:mr-2" />
-          {!isMobile && "New"}
-        </Button>
-
-
-        {/* Help (Hidden on mobile) */}
-        {!isMobile && (
-          <Button variant="ghost" size="sm">
-            <HelpCircle className="w-4 h-4" />
+          {/* Notifications */}
+          <Button variant="ghost" size="sm" className="shrink-0">
+            <Bell className="w-4 h-4" />
           </Button>
-        )}
 
-        {/* Notifications */}
-        <Button variant="ghost" size="sm" className="shrink-0">
-          <Bell className="w-4 h-4" />
-        </Button>
-
-        {/* User Avatar */}
-        <Button variant="ghost" size="sm" className="rounded-full shrink-0">
-          <User className="w-4 h-4" />
-        </Button>
+          {/* User Profile Dropdown */}
+          <UserProfileDropdown />
+        </div>
       </div>
-    </div>
     </>
   );
 }
