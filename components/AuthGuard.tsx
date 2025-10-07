@@ -100,36 +100,67 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         addDebugLog(`ℹ️ No URL hash present`);
       }
       
-      // NOW check for tokens (localStorage for localhost, cookies for production)
-      let accessToken, idToken;
-      
+      // In PRODUCTION: httpOnly cookies can't be read by JavaScript!
+      // So we skip token checking and go straight to /auth/me endpoint
       if (isProduction) {
-        // Production: Check cookies
-        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-          const [key, value] = cookie.trim().split('=');
-          if (key && value) acc[key] = decodeURIComponent(value);
-          return acc;
-        }, {} as Record<string, string>);
+        addDebugLog(`🌐 Production: Using /auth/me for cookie-based authentication...`);
         
-        accessToken = cookies.access_token;
-        idToken = cookies.id_token;
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            method: 'GET',
+            credentials: 'include'
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            addDebugLog(`✅ Authenticated via cookies! User: ${userData.user?.email || userData.user?.sub}`);
+            
+            // Store user data in localStorage for app compatibility
+            if (userData.user) {
+              if (userData.user.sub) localStorage.setItem('user_id', userData.user.sub);
+              if (userData.user.email) localStorage.setItem('user_email', userData.user.email);
+              if (userData.user['cognito:username']) localStorage.setItem('user_name', userData.user['cognito:username']);
+            }
+            
+            // CRITICAL: Set authenticated state IMMEDIATELY
+            setIsAuthenticated(true);
+            setIsChecking(false);
+            addDebugLog(`🎉 Cookie-based authentication successful!`);
+            
+            // Exit early to prevent any redirects
+            return;
+          } else {
+            addDebugLog(`❌ Cookie-based auth failed, redirecting to login...`);
+          }
+        } catch (error) {
+          addDebugLog(`⚠️ Cookie auth check failed: ${error}`);
+        }
         
-        addDebugLog(`🍪 Token check in cookies: accessToken=${!!accessToken}, idToken=${!!idToken}`);
-      } else {
-        // Development: Check localStorage
-        accessToken = localStorage.getItem('access_token') || localStorage.getItem('accessToken');
-        idToken = localStorage.getItem('id_token') || localStorage.getItem('idToken');
+        // No tokens and no valid cookies, redirect to auth.brmh.in
+        const currentUrl = window.location.href.split('#')[0];
+        const authUrl = `https://auth.brmh.in/login?next=${encodeURIComponent(currentUrl)}`;
+        addDebugLog(`❌ No authentication found, will redirect to auth in 2 seconds...`);
+        addDebugLog(`🔀 Redirect URL: ${authUrl}`);
         
-        addDebugLog(`📦 Token check in localStorage: accessToken=${!!accessToken}, idToken=${!!idToken}`);
+        setTimeout(() => {
+          window.location.href = authUrl;
+        }, 2000);
+        return;
       }
+
+      // DEVELOPMENT: Check localStorage and validate tokens
+      const accessToken = localStorage.getItem('access_token') || localStorage.getItem('accessToken');
+      const idToken = localStorage.getItem('id_token') || localStorage.getItem('idToken');
+      
+      addDebugLog(`📦 Token check in localStorage: accessToken=${!!accessToken}, idToken=${!!idToken}`);
       
       if (tokensExtractedFromHash) {
         addDebugLog(`✨ Just extracted tokens from hash, proceeding with validation...`);
       }
       
-      // If no tokens found, try cookie-based auth endpoint
+      // If no tokens in localStorage, try cookie-based auth (fallback for localhost)
       if (!accessToken && !idToken) {
-        addDebugLog(`🍪 No tokens found, checking for cookie-based auth...`);
+        addDebugLog(`🍪 No tokens in localStorage, checking for cookie-based auth...`);
         
         try {
           const response = await fetch(`${API_BASE_URL}/auth/me`, {
