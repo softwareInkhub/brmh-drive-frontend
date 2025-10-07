@@ -67,9 +67,9 @@ export class SSOUtils {
     const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     if (isLocalhost) {
       return {
-        accessToken: localStorage.getItem('access_token') || localStorage.getItem('accessToken'),
-        idToken: localStorage.getItem('id_token') || localStorage.getItem('idToken'),
-        refreshToken: localStorage.getItem('refresh_token') || localStorage.getItem('refreshToken'),
+        accessToken: localStorage.getItem('access_token') || localStorage.getItem('accessToken') || undefined,
+        idToken: localStorage.getItem('id_token') || localStorage.getItem('idToken') || undefined,
+        refreshToken: localStorage.getItem('refresh_token') || localStorage.getItem('refreshToken') || undefined,
       };
     }
 

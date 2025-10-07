@@ -98,8 +98,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       }
       
       // NOW check for tokens in localStorage (after hash extraction is complete)
-      let accessToken = localStorage.getItem('access_token') || localStorage.getItem('accessToken');
-      let idToken = localStorage.getItem('id_token') || localStorage.getItem('idToken');
+      const accessToken = localStorage.getItem('access_token') || localStorage.getItem('accessToken');
+      const idToken = localStorage.getItem('id_token') || localStorage.getItem('idToken');
       
       addDebugLog(`📦 Token check in localStorage: accessToken=${!!accessToken}, idToken=${!!idToken}`);
       
@@ -241,7 +241,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, hasChecked]);
 
   if (isChecking) {
     return (
