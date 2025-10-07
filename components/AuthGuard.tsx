@@ -37,8 +37,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // FIRST: Check for tokens in URL hash (from auth.brmh.in redirect)
+      // This only applies to localhost development
       let tokensExtractedFromHash = false;
-      if (window.location.hash) {
+      if (!isProduction && window.location.hash) {
         addDebugLog(`🔗 URL hash detected, extracting tokens...`);
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
@@ -93,23 +94,42 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           
           tokensExtractedFromHash = true;
         }
+      } else if (isProduction) {
+        addDebugLog(`🌐 Production mode - using cookie-based authentication`);
       } else {
         addDebugLog(`ℹ️ No URL hash present`);
       }
       
-      // NOW check for tokens in localStorage (after hash extraction is complete)
-      const accessToken = localStorage.getItem('access_token') || localStorage.getItem('accessToken');
-      const idToken = localStorage.getItem('id_token') || localStorage.getItem('idToken');
+      // NOW check for tokens (localStorage for localhost, cookies for production)
+      let accessToken, idToken;
       
-      addDebugLog(`📦 Token check in localStorage: accessToken=${!!accessToken}, idToken=${!!idToken}`);
+      if (isProduction) {
+        // Production: Check cookies
+        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+          const [key, value] = cookie.trim().split('=');
+          if (key && value) acc[key] = decodeURIComponent(value);
+          return acc;
+        }, {} as Record<string, string>);
+        
+        accessToken = cookies.access_token;
+        idToken = cookies.id_token;
+        
+        addDebugLog(`🍪 Token check in cookies: accessToken=${!!accessToken}, idToken=${!!idToken}`);
+      } else {
+        // Development: Check localStorage
+        accessToken = localStorage.getItem('access_token') || localStorage.getItem('accessToken');
+        idToken = localStorage.getItem('id_token') || localStorage.getItem('idToken');
+        
+        addDebugLog(`📦 Token check in localStorage: accessToken=${!!accessToken}, idToken=${!!idToken}`);
+      }
       
       if (tokensExtractedFromHash) {
         addDebugLog(`✨ Just extracted tokens from hash, proceeding with validation...`);
       }
       
-      // If no tokens in localStorage, try cookie-based auth for production
+      // If no tokens found, try cookie-based auth endpoint
       if (!accessToken && !idToken) {
-        addDebugLog(`🍪 No tokens in localStorage, checking for cookie-based auth...`);
+        addDebugLog(`🍪 No tokens found, checking for cookie-based auth...`);
         
         try {
           const response = await fetch(`${API_BASE_URL}/auth/me`, {
