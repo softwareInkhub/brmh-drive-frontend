@@ -127,61 +127,6 @@ export class SSOUtils {
     }
   }
 
-  /**
-   * Logout and redirect to auth.brmh.in
-   */
-  static async logout(returnUrl?: string): Promise<void> {
-    const tokens = this.getTokens();
-
-    // Call backend logout endpoint
-    try {
-      await fetch(`${this.API_BASE_URL}/auth/logout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ refresh_token: tokens.refreshToken }),
-      });
-    } catch (error) {
-      console.error('[SSO] Logout API call failed:', error);
-    }
-
-    // Clear cookies
-    this.clearCookies();
-
-    // Clear localStorage (for backward compatibility)
-    if (typeof window !== 'undefined') {
-      const keysToRemove = [
-        'access_token',
-        'id_token',
-        'refresh_token',
-        'accessToken',
-        'idToken',
-        'refreshToken',
-        'user',
-        'user_id',
-        'user_email',
-        'user_name',
-      ];
-      keysToRemove.forEach((key) => {
-        try {
-          localStorage.removeItem(key);
-          sessionStorage.removeItem(key);
-        } catch (e) {
-          // Ignore errors
-        }
-      });
-    }
-
-    // Redirect to auth domain
-    const logoutUrl = new URL('/login', this.AUTH_DOMAIN);
-    if (returnUrl) {
-      logoutUrl.searchParams.set('next', returnUrl);
-    }
-
-    if (typeof window !== 'undefined') {
-      window.location.href = logoutUrl.toString();
-    }
-  }
 
   /**
    * Clear all auth cookies

@@ -16,9 +16,10 @@ function getAuthTokenFromRequest(request: NextRequest): string | null {
 
 async function handleRequest(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  const path = params.path.join('/');
+  const resolvedParams = await params;
+  const path = resolvedParams.path.join('/');
   const url = new URL(request.url);
   const backendUrl = `${BACKEND_BASE}/drive/${path}${url.search}`;
   
@@ -43,7 +44,7 @@ async function handleRequest(
   }
   
   try {
-    let body: any = undefined;
+    let body: string | FormData | undefined = undefined;
     
     // Handle request body for POST/PUT/PATCH requests
     if (['POST', 'PUT', 'PATCH'].includes(request.method)) {
@@ -68,7 +69,7 @@ async function handleRequest(
     
     // Handle different response types
     const contentType = response.headers.get('content-type');
-    let responseData: any;
+    let responseData: string | object;
     
     if (contentType?.includes('application/json')) {
       responseData = await response.json();
@@ -111,27 +112,27 @@ async function handleRequest(
 }
 
 // Handle all HTTP methods
-export async function GET(request: NextRequest, context: { params: { path: string[] } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return handleRequest(request, context);
 }
 
-export async function POST(request: NextRequest, context: { params: { path: string[] } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return handleRequest(request, context);
 }
 
-export async function PUT(request: NextRequest, context: { params: { path: string[] } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return handleRequest(request, context);
 }
 
-export async function PATCH(request: NextRequest, context: { params: { path: string[] } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return handleRequest(request, context);
 }
 
-export async function DELETE(request: NextRequest, context: { params: { path: string[] } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return handleRequest(request, context);
 }
 
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS(_request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {

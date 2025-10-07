@@ -16,28 +16,30 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow auth-related routes to prevent redirect loops
-  if (
-    pathname.startsWith('/callback') || 
-    pathname.startsWith('/auth') ||
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/register')
-  ) {
+  // For localhost development, skip auth redirect (auth will be handled client-side)
+  const isLocalhost = req.nextUrl.hostname === 'localhost' || req.nextUrl.hostname === '127.0.0.1';
+  if (isLocalhost) {
+    console.log('[Drive Middleware] Localhost detected, skipping auth redirect (client-side auth will handle)');
     return NextResponse.next();
   }
 
-  // Check for auth token in cookies (primary SSO method)
+  // Check for auth token in cookies (for production)
   const idToken = req.cookies.get('id_token')?.value;
   const accessToken = req.cookies.get('access_token')?.value;
   
   if (idToken || accessToken) {
-    console.log('[Drive Middleware] User authenticated via cookies, allowing access');
+    console.log('[Drive Middleware] User authenticated, allowing access');
     return NextResponse.next();
   }
 
-  // Redirect to centralized auth with return URL
+  // Avoid redirect loops for callback routes
+  if (pathname.startsWith('/callback') || pathname.startsWith('/auth')) {
+    return NextResponse.next();
+  }
+
+  // Redirect to auth page with return URL (production only)
   const nextUrl = encodeURIComponent(href);
-  console.log('[Drive Middleware] No auth token found, redirecting to centralized auth');
+  console.log('[Drive Middleware] No auth token found, redirecting to auth page');
   return NextResponse.redirect(`https://auth.brmh.in/login?next=${nextUrl}`);
 }
 

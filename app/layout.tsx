@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/lib/auth-context';
 import { ReactQueryProvider } from '@/lib/react-query';
 import { MainLayout } from '@/components/layout/main-layout';
+import AuthGuard from '@/components/AuthGuard';
 import './globals.css';
 
 const montserrat = Montserrat({
@@ -32,12 +33,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <ReactQueryProvider>
-              <MainLayout>{children}</MainLayout>
-              <Toaster />
-            </ReactQueryProvider>
-          </AuthProvider>
+          <AuthGuard>
+            <AuthProvider>
+              <ReactQueryProvider>
+                <MainLayout>{children}</MainLayout>
+                <Toaster />
+              </ReactQueryProvider>
+            </AuthProvider>
+          </AuthGuard>
         </ThemeProvider>
       </body>
     </html>
