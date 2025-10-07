@@ -112,8 +112,22 @@ export class SSOUtils {
    * Validate token with backend
    */
   static async validateToken(token?: string): Promise<boolean> {
-    const tokenToValidate = token || this.getTokens().accessToken;
-    if (!tokenToValidate) return false;
+    const tokens = this.getTokens();
+    const tokenToValidate = token || tokens.accessToken || tokens.idToken;
+    
+    // If no token provided, try cookie-based auth
+    if (!tokenToValidate) {
+      try {
+        const response = await fetch(`${this.API_BASE_URL}/auth/me`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        return response.ok;
+      } catch (error) {
+        console.error('[SSO] Cookie-based validation failed:', error);
+        return false;
+      }
+    }
 
     try {
       const response = await fetch(`${this.API_BASE_URL}/auth/validate`, {
@@ -124,10 +138,31 @@ export class SSOUtils {
         },
         credentials: 'include',
       });
-      return response.ok;
+      
+      // If validation fails, try cookie-based auth as fallback
+      if (!response.ok) {
+        const fallbackResponse = await fetch(`${this.API_BASE_URL}/auth/me`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        return fallbackResponse.ok;
+      }
+      
+      return true;
     } catch (error) {
       console.error('[SSO] Token validation failed:', error);
-      return false;
+      
+      // Try cookie-based auth as fallback
+      try {
+        const fallbackResponse = await fetch(`${this.API_BASE_URL}/auth/me`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        return fallbackResponse.ok;
+      } catch (fallbackError) {
+        console.error('[SSO] Cookie-based fallback validation failed:', fallbackError);
+        return false;
+      }
     }
   }
 
