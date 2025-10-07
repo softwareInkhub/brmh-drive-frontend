@@ -15,6 +15,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Skip auth check for debug pages
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/debug-auth')) {
+        addDebugLog(`🔍 Debug page detected, skipping auth check`);
+        setIsAuthenticated(true);
+        setIsChecking(false);
+        return;
+      }
+      
       // Prevent multiple runs
       if (hasChecked) {
         addDebugLog(`⏸️ Auth check already completed, skipping...`);
@@ -26,7 +34,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       // Determine API URL based on environment
       const isProduction = window.location.hostname.includes('brmh.in') && !window.location.hostname.includes('localhost');
       const API_BASE_URL = isProduction 
-        ? (process.env.NEXT_PUBLIC_AWS_URL || 'https://brmh.in')
+        ? (process.env.NEXT_PUBLIC_DRIVE_API_BASE_URL || process.env.NEXT_PUBLIC_AWS_URL || 'https://brmh.in')
         : (process.env.NEXT_PUBLIC_DRIVE_API_BASE_URL || 'http://localhost:5001');
       
       addDebugLog(`🔍 Starting authentication check...`);
@@ -104,47 +112,74 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       // So we skip token checking and go straight to /auth/me endpoint
       if (isProduction) {
         addDebugLog(`🌐 Production: Using /auth/me for cookie-based authentication...`);
+        addDebugLog(`📡 Calling: ${API_BASE_URL}/auth/me`);
+        addDebugLog(`🍪 Credentials: include (will send httpOnly cookies)`);
         
         try {
           const response = await fetch(`${API_BASE_URL}/auth/me`, {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
           });
+          
+          addDebugLog(`📡 Response status: ${response.status} ${response.statusText}`);
+          addDebugLog(`📡 Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
           
           if (response.ok) {
             const userData = await response.json();
             addDebugLog(`✅ Authenticated via cookies! User: ${userData.user?.email || userData.user?.sub}`);
+            addDebugLog(`📦 User data: ${JSON.stringify(userData).substring(0, 200)}`);
             
             // Store user data in localStorage for app compatibility
             if (userData.user) {
-              if (userData.user.sub) localStorage.setItem('user_id', userData.user.sub);
-              if (userData.user.email) localStorage.setItem('user_email', userData.user.email);
-              if (userData.user['cognito:username']) localStorage.setItem('user_name', userData.user['cognito:username']);
+              if (userData.user.sub) {
+                localStorage.setItem('user_id', userData.user.sub);
+                addDebugLog(`💾 Stored user_id: ${userData.user.sub}`);
+              }
+              if (userData.user.email) {
+                localStorage.setItem('user_email', userData.user.email);
+                addDebugLog(`💾 Stored user_email: ${userData.user.email}`);
+              }
+              if (userData.user['cognito:username']) {
+                localStorage.setItem('user_name', userData.user['cognito:username']);
+                addDebugLog(`💾 Stored user_name: ${userData.user['cognito:username']}`);
+              }
             }
             
             // CRITICAL: Set authenticated state IMMEDIATELY
             setIsAuthenticated(true);
             setIsChecking(false);
             addDebugLog(`🎉 Cookie-based authentication successful!`);
+            addDebugLog(`✅ isAuthenticated set to TRUE`);
+            addDebugLog(`✅ isChecking set to FALSE`);
+            addDebugLog(`🚀 App should now render!`);
             
             // Exit early to prevent any redirects
             return;
           } else {
-            addDebugLog(`❌ Cookie-based auth failed, redirecting to login...`);
+            const errorText = await response.text();
+            addDebugLog(`❌ Cookie-based auth failed with status: ${response.status}`);
+            addDebugLog(`❌ Error response: ${errorText.substring(0, 200)}`);
           }
         } catch (error) {
-          addDebugLog(`⚠️ Cookie auth check failed: ${error}`);
+          addDebugLog(`⚠️ Cookie auth check failed with error: ${error}`);
+          addDebugLog(`⚠️ Error details: ${JSON.stringify(error, null, 2)}`);
         }
         
         // No tokens and no valid cookies, redirect to auth.brmh.in
         const currentUrl = window.location.href.split('#')[0];
         const authUrl = `https://auth.brmh.in/login?next=${encodeURIComponent(currentUrl)}`;
-        addDebugLog(`❌ No authentication found, will redirect to auth in 2 seconds...`);
+        addDebugLog(`❌ No authentication found, will redirect to auth in 3 seconds...`);
         addDebugLog(`🔀 Redirect URL: ${authUrl}`);
+        addDebugLog(`⏱️ You have 3 seconds to check the console logs above`);
         
         setTimeout(() => {
+          addDebugLog(`🔀 NOW REDIRECTING TO: ${authUrl}`);
           window.location.href = authUrl;
-        }, 2000);
+        }, 3000);
         return;
       }
 
