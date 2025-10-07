@@ -33,8 +33,59 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       addDebugLog(`🌐 API Base URL: ${API_BASE_URL} (${isProduction ? 'production' : 'development'})`);
       addDebugLog(`📍 Current URL: ${window.location.href.substring(0, 100)}`);
       
-      // CRITICAL: Add a small delay to prevent race conditions
+      // CRITICAL: Add a small delay to prevent race conditions and allow middleware cookies to be set
       await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Helper function to get cookies
+      const getCookies = (): Record<string, string> => {
+        return document.cookie.split(';').reduce((acc, cookie) => {
+          const [key, value] = cookie.trim().split('=');
+          if (key && value) {
+            acc[key] = decodeURIComponent(value);
+          }
+          return acc;
+        }, {} as Record<string, string>);
+      };
+      
+      // Check for auth_valid flag set by middleware (production only)
+      if (isProduction) {
+        const cookies = getCookies();
+        if (cookies.auth_valid) {
+          addDebugLog(`✅ Found auth_valid flag from middleware - user is authenticated!`);
+          
+          // Try to get user info from backend to populate localStorage
+          try {
+            const response = await fetch(`${API_BASE_URL}/auth/me`, {
+              method: 'GET',
+              credentials: 'include'
+            });
+            
+            if (response.ok) {
+              const userData = await response.json();
+              addDebugLog(`✅ Got user data from backend: ${userData.user?.email || userData.user?.sub}`);
+              
+              // Store user data in localStorage for app compatibility
+              if (userData.user) {
+                if (userData.user.sub) localStorage.setItem('user_id', userData.user.sub);
+                if (userData.user.email) localStorage.setItem('user_email', userData.user.email);
+                if (userData.user['cognito:username']) localStorage.setItem('user_name', userData.user['cognito:username']);
+              }
+            } else {
+              addDebugLog(`⚠️ /auth/me failed but auth_valid is set, continuing anyway`);
+            }
+          } catch (error) {
+            addDebugLog(`⚠️ Failed to fetch user data but auth_valid is set: ${error}`);
+          }
+          
+          // Set authenticated state immediately
+          setIsAuthenticated(true);
+          setIsChecking(false);
+          addDebugLog(`🎉 Authentication successful via middleware flag!`);
+          return;
+        } else {
+          addDebugLog(`⚠️ No auth_valid flag found, will try backend authentication...`);
+        }
+      }
       
       // FIRST: Check for tokens in URL hash (from auth.brmh.in redirect)
       // This only applies to localhost development
