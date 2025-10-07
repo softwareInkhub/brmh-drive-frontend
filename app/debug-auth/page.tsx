@@ -8,11 +8,21 @@ interface LogEntry {
   type: 'info' | 'success' | 'error' | 'warning';
 }
 
+interface ApiResponse {
+  user?: {
+    email?: string;
+    sub?: string;
+    [key: string]: unknown;
+  };
+  error?: string;
+  [key: string]: unknown;
+}
+
 export default function DebugAuthPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [cookies, setCookies] = useState<Record<string, string>>({});
   const [localStorage, setLocalStorage] = useState<Record<string, string>>({});
-  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null);
   const [environment, setEnvironment] = useState<Record<string, string>>({});
 
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {
@@ -118,7 +128,6 @@ export default function DebugAuthPage() {
       const hasAuthValid = !!cookiesObj.auth_valid;
       const hasIdToken = !!cookiesObj.id_token;
       const hasAccessToken = !!cookiesObj.access_token;
-      const hasRefreshToken = !!cookiesObj.refresh_token;
       
       if (hasAuthValid) {
         addLog('✅ auth_valid flag is SET (middleware approved)', 'success');
@@ -298,8 +307,8 @@ export default function DebugAuthPage() {
             <li>Check the <span className="text-yellow-400">Cookies</span> section for <code className="bg-gray-800 px-2 py-1 rounded">auth_valid</code> flag</li>
             <li>Check the <span className="text-purple-400">/auth/me Response</span> to see if backend recognizes you</li>
             <li>Check the <span className="text-red-400">Debug Logs</span> for any errors</li>
-            <li>If you see <code className="bg-gray-800 px-2 py-1 rounded">auth_valid</code> cookie but still redirect, there's a bug in AuthGuard</li>
-            <li>If you don't see <code className="bg-gray-800 px-2 py-1 rounded">auth_valid</code> cookie, middleware is not setting it</li>
+            <li>If you see <code className="bg-gray-800 px-2 py-1 rounded">auth_valid</code> cookie but still redirect, there&apos;s a bug in AuthGuard</li>
+            <li>If you don&apos;t see <code className="bg-gray-800 px-2 py-1 rounded">auth_valid</code> cookie, middleware is not setting it</li>
             <li>Click <span className="text-blue-400">Test Login Flow</span> to login and come back here</li>
           </ol>
         </div>
@@ -309,7 +318,7 @@ export default function DebugAuthPage() {
           <div className="bg-green-900/30 border border-green-500 rounded-lg p-6">
             <h3 className="text-xl font-bold mb-3 text-green-300">✅ Expected (Working)</h3>
             <ul className="list-disc list-inside space-y-1 text-gray-300 text-sm">
-              <li><code className="bg-gray-800 px-2 py-1 rounded">auth_valid</code> = "1" (in Cookies)</li>
+              <li><code className="bg-gray-800 px-2 py-1 rounded">auth_valid</code> = &quot;1&quot; (in Cookies)</li>
               <li>/auth/me returns <code className="bg-gray-800 px-2 py-1 rounded">200 OK</code></li>
               <li>/auth/me has user.email or user.sub</li>
               <li>No redirect to auth.brmh.in</li>
