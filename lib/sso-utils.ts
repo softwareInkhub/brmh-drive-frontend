@@ -31,6 +31,15 @@ export class SSOUtils {
   static isAuthenticated(): boolean {
     if (typeof document === 'undefined') return false;
 
+    // For localhost development, check localStorage
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      const accessToken = localStorage.getItem('access_token') || localStorage.getItem('accessToken');
+      const idToken = localStorage.getItem('id_token') || localStorage.getItem('idToken');
+      return !!(accessToken || idToken);
+    }
+
+    // For production, check cookies
     const cookies = this.getCookies();
     return !!(cookies.access_token || cookies.id_token);
   }
@@ -51,9 +60,20 @@ export class SSOUtils {
   }
 
   /**
-   * Get tokens from cookies
+   * Get tokens from cookies or localStorage
    */
   static getTokens(): SSOTokens {
+    // For localhost development, check localStorage
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    if (isLocalhost) {
+      return {
+        accessToken: localStorage.getItem('access_token') || localStorage.getItem('accessToken'),
+        idToken: localStorage.getItem('id_token') || localStorage.getItem('idToken'),
+        refreshToken: localStorage.getItem('refresh_token') || localStorage.getItem('refreshToken'),
+      };
+    }
+
+    // For production, check cookies
     const cookies = this.getCookies();
     return {
       accessToken: cookies.access_token,
