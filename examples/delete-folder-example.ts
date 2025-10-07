@@ -4,10 +4,12 @@
  */
 
 import { driveApi, DriveApiError } from '@/lib/api-client';
+import { getCurrentUserId } from '@/lib/config';
 import type { DeleteFolderResponse } from '@/lib/drive-types';
 
 async function deleteFolderExample() {
-  const userId = "user123";
+  // Get the authenticated user's ID from SSO
+  const userId = getCurrentUserId();
   const folderId = "FOLDER_abc123";
 
   try {

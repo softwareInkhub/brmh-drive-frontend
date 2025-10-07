@@ -7,6 +7,7 @@ import { FolderCard } from '@/components/ui/folder-card';
 import { FileTile } from '@/components/ui/file-tile';
 import { FileTable } from '@/components/ui/file-table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyDriveState } from '@/components/ui/empty-drive-state';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
@@ -168,60 +169,11 @@ function HomePageContent() {
 
       {/* Empty State */}
       {sortedFolders.length === 0 && sortedFiles.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            {searchQuery.trim() ? (
-              <svg
-                className="w-8 h-8 text-muted-foreground"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            ) : (
-              <svg
-                className="w-8 h-8 text-muted-foreground"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"
-                />
-              </svg>
-            )}
-          </div>
-          {searchQuery.trim() ? (
-            <>
-              <h2 className="text-lg font-semibold">No results found</h2>
-              <p className="text-muted-foreground mt-2">
-                No files or folders match your search for &quot;{searchQuery}&quot;.
-              </p>
-            </>
-          ) : (
-            <>
-              <h2 className="text-lg font-semibold">Your drive is empty</h2>
-              <p className="text-muted-foreground mt-2">
-                Upload files or create folders to get started.
-              </p>
-            </>
-          )}
-        </div>
+        <EmptyDriveState 
+          isSearchResult={!!searchQuery.trim()}
+          searchQuery={searchQuery}
+          currentFolderId="ROOT"
+        />
       )}
     </div>
   );

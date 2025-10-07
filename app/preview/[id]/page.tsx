@@ -4,11 +4,12 @@ import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useTabs, useUpdateTab } from '@/lib/store-client';
 import { FilePreview } from '@/components/ui/file-preview';
+import { getCurrentUserId } from '@/lib/config';
 
 export default function PreviewPage() {
   const params = useParams();
   const fileId = params.id as string;
-  const userId = 'user123'; // This should come from your auth system
+  const userId = getCurrentUserId(); // Get userId from authenticated SSO session
 
   const tabs = useTabs();
   const updateTab = useUpdateTab();

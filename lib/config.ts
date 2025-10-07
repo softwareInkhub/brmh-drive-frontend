@@ -8,9 +8,26 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 // Use proxy API route to avoid CORS issues
 // In development, you can set NEXT_PUBLIC_DRIVE_API_BASE_URL to point directly to backend
 // In production, we use the proxy route to avoid CORS issues
-export const API_BASE =
+const RAW_BASE =
   process.env.NEXT_PUBLIC_DRIVE_API_BASE_URL ??
   (isDevelopment ? 'http://localhost:5001' : '/api/drive');
+
+// Normalize base: if absolute URL and does not include '/drive' path, append it
+// This prevents 404s like https://brmh.in/files/... by ensuring https://brmh.in/drive/files...
+export const API_BASE = (() => {
+  try {
+    // If it's a relative proxy path, use as-is
+    if (RAW_BASE.startsWith('/')) return RAW_BASE;
+    const url = new URL(RAW_BASE);
+    if (!url.pathname.endsWith('/drive')) {
+      url.pathname = `${url.pathname.replace(/\/$/, '')}/drive`;
+    }
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    // Fallback to raw if not a valid URL
+    return RAW_BASE;
+  }
+})();
 
 import { SSOUtils } from './sso-utils';
 

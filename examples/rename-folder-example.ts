@@ -4,9 +4,11 @@
  */
 
 import { driveApi, DriveApiError } from '@/lib/api-client';
+import { getCurrentUserId } from '@/lib/config';
 
 async function renameFolderExample() {
-  const userId = "user123";
+  // Get the authenticated user's ID from SSO
+  const userId = getCurrentUserId();
   const folderId = "FOLDER_aa30dd00386e477ab0b99e5f2e06c356";
   const newName = "My Renamed Folder";
 
@@ -73,13 +75,14 @@ export function useRenameFolderExample() {
 
 // Example of the expected API request format:
 /*
-PATCH /drive/folder/user123/FOLDER_aa30dd00386e477ab0b99e5f2e06c356
+PATCH /drive/rename/folder/{userId}/FOLDER_aa30dd00386e477ab0b99e5f2e06c356
 Content-Type: application/json
 
 {
-  "name": "My Renamed Folder",
-  "type": "folder"
+  "newName": "My Renamed Folder"
 }
+
+Note: {userId} is dynamically obtained from the authenticated user's SSO token
 
 Expected Response:
 {

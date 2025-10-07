@@ -4,18 +4,21 @@
  */
 
 import { driveApi } from '@/lib/api-client';
+import { getCurrentUserId } from '@/lib/config';
 
 async function testFinalRenameImplementation() {
+  const userId = getCurrentUserId(); // Get from authenticated session
   const folderId = "FOLDER_aa30dd00386e477ab0b99e5f2e06c356";
   const newName = "Harshek";
 
   console.log('=== Final Rename Folder Test ===');
+  console.log('User ID:', userId);
   console.log('Folder ID:', folderId);
   console.log('New Name:', newName);
   console.log('');
   console.log('Expected API Call:');
   console.log('Method: PATCH');
-  console.log('URL: /drive/rename/folder/user123/FOLDER_aa30dd00386e477ab0b99e5f2e06c356');
+  console.log(`URL: /drive/rename/folder/${userId}/FOLDER_aa30dd00386e477ab0b99e5f2e06c356`);
   console.log('Headers: { "Content-Type": "application/json" }');
   console.log('Body: { "newName": "Harshek" }');
   console.log('');

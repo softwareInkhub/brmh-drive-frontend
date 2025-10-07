@@ -4,8 +4,10 @@
 The BRMH Drive frontend at `https://drive.brmh.in` is experiencing CORS errors when making requests to the backend at `https://brmh.in`. The specific error is:
 
 ```
-Access to fetch at 'https://brmh.in/drive/files/user123?parentId=ROOT' from origin 'https://drive.brmh.in' has been blocked by CORS policy: Request header field cache-control is not allowed by Access-Control-Allow-Headers in preflight response.
+Access to fetch at 'https://brmh.in/drive/files/{userId}?parentId=ROOT' from origin 'https://drive.brmh.in' has been blocked by CORS policy: Request header field cache-control is not allowed by Access-Control-Allow-Headers in preflight response.
 ```
+
+**Note**: `{userId}` is dynamically obtained from the authenticated user's SSO token (e.g., using `getCurrentUserId()` from `@/lib/config`).
 
 ## Root Cause
 The backend server at `https://brmh.in` needs to be configured to allow cross-origin requests from `https://drive.brmh.in` with the following headers:

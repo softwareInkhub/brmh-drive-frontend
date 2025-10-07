@@ -5,6 +5,9 @@
 </head>
 <body>
     <h1>Upload Test</h1>
+    <p><strong>Note:</strong> In production, userId should come from authenticated SSO session.</p>
+    <input type="text" id="userIdInput" placeholder="Enter userId (from SSO)" value="your-authenticated-user-id" style="width: 300px; margin-bottom: 10px;" />
+    <br>
     <input type="file" id="fileInput" />
     <button onclick="testUpload()">Test Upload</button>
     <div id="result"></div>
@@ -12,10 +15,17 @@
     <script>
         async function testUpload() {
             const fileInput = document.getElementById('fileInput');
+            const userIdInput = document.getElementById('userIdInput');
             const file = fileInput.files[0];
+            const userId = userIdInput.value;
             
             if (!file) {
                 alert('Please select a file');
+                return;
+            }
+
+            if (!userId || userId === 'your-authenticated-user-id') {
+                alert('Please enter a valid userId (in production this comes from SSO authentication)');
                 return;
             }
 
@@ -28,7 +38,7 @@
                 const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
                 
                 const payload = {
-                    userId: 'user123',
+                    userId: userId, // Dynamic userId from input (mimics SSO authentication)
                     parentId: 'ROOT',
                     fileData: base64,
                     fileName: file.name,
