@@ -15,6 +15,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Skip auth check for debug pages
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/debug-auth')) {
+        addDebugLog(`🔍 Debug page detected, skipping auth check`);
+        setIsAuthenticated(true);
+        setIsChecking(false);
+        return;
+      }
+      
       // Prevent multiple runs
       if (hasChecked) {
         addDebugLog(`⏸️ Auth check already completed, skipping...`);
