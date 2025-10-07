@@ -6,11 +6,12 @@ const PUBLIC_FILE = /\.(.*)$/;
 export function middleware(req: NextRequest) {
   const { pathname, href } = req.nextUrl;
 
-  // Allow public files and API routes
+  // Allow public files, API routes, and debug pages
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/favicon') ||
+    pathname.startsWith('/debug-auth') ||
     PUBLIC_FILE.test(pathname)
   ) {
     return NextResponse.next();
