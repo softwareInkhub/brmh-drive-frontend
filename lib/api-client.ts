@@ -138,7 +138,10 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 export const driveApi = new (class DriveApiClient {
-  constructor(public userId: string = getCurrentUserId()) {}
+  private get userId(): string {
+    // Always resolve the latest authenticated user id to avoid using 'anonymous'
+    return getCurrentUserId();
+  }
 
   // File Operations
   async uploadFileJson(file: File, parentId: ID | 'ROOT' = 'ROOT', tags: string[] = []): Promise<ApiResponse<{ fileId: ID }>> {

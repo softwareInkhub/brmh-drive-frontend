@@ -24,9 +24,15 @@ import type {
 
 // Query hooks
 export function useFolderContents(folderId: ID | 'ROOT' = 'ROOT') {
+  const userId = getCurrentUserId();
   return useQuery({
-    queryKey: driveKeys.contents(folderId),
+    // include userId so query cache is per-user and invalidates when user changes
+    queryKey: [...driveKeys.contents(folderId), 'uid', userId],
     queryFn: async (): Promise<DriveContentsResponse> => {
+      // Avoid fetching with an unauthenticated/placeholder user
+      if (userId === 'anonymous') {
+        return { folders: [], files: [], path: [{ id: 'ROOT', name: 'My BRMH Drive' }] };
+      }
       if (folderId === 'ROOT') {
         const [filesResponse, foldersResponse] = await Promise.all([
           driveApi.getFiles('ROOT'),
@@ -47,7 +53,7 @@ export function useFolderContents(folderId: ID | 'ROOT' = 'ROOT') {
         return response.data!;
       }
     },
-    enabled: !!folderId,
+    enabled: !!folderId && userId !== 'anonymous',
     staleTime: 5 * 60 * 1000,
   });
 }
