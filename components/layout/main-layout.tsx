@@ -52,18 +52,18 @@ function MainLayoutContent({ children }: MainLayoutProps) {
     }
   }, [sidebarCollapsed, isMobile]);
 
-  // Show loading state while checking authentication
+  // AuthGuard handles ALL authentication checks and redirects
+  // MainLayout just renders - no authentication checks needed here
+  // This prevents redirect loops in production
+  
+  // Only show loading during initial AuthProvider setup
   if (isLoading) {
-    return <AuthLoadingScreen />;
+    console.log('[MainLayout] AuthProvider is loading...');
   }
-
-  // Redirect to auth if not authenticated
-  if (!isAuthenticated) {
-    if (typeof window !== 'undefined') {
-      window.location.href =
-        'https://auth.brmh.in/login?next=' +
-        encodeURIComponent(window.location.href);
-    }
+  
+  // Even if AuthProvider shows not authenticated, we trust AuthGuard
+  // AuthGuard will redirect if truly not authenticated
+  if (!isAuthenticated && isLoading) {
     return <AuthLoadingScreen />;
   }
 
