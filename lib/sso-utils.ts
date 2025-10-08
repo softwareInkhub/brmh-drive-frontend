@@ -39,9 +39,10 @@ export class SSOUtils {
       return !!(accessToken || idToken);
     }
 
-    // For production, check cookies
+    // For production, check if the middleware has set the auth_valid flag
+    // This flag is set by middleware when httpOnly cookies are present
     const cookies = this.getCookies();
-    return !!(cookies.access_token || cookies.id_token);
+    return !!(cookies.auth_valid || cookies.access_token || cookies.id_token);
   }
 
   /**
@@ -86,24 +87,77 @@ export class SSOUtils {
    * Get user info from ID token
    */
   static getUser(): SSOUser | null {
-    const tokens = this.getTokens();
-    if (!tokens.idToken) return null;
+    // For production with httpOnly cookies, we need to call /auth/me
+    // For localhost, we can parse the token from localStorage
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    
+    if (isLocalhost) {
+      const tokens = this.getTokens();
+      if (!tokens.idToken) return null;
 
+      try {
+        const payload = JSON.parse(atob(tokens.idToken.split('.')[1]));
+        return {
+          sub: payload.sub,
+          email: payload.email,
+          email_verified: payload.email_verified,
+          name:
+            payload.name ||
+            `${payload.given_name || ''} ${payload.family_name || ''}`.trim(),
+          given_name: payload.given_name,
+          family_name: payload.family_name,
+          picture: payload.picture,
+        };
+      } catch (error) {
+        console.error('[SSO] Failed to parse ID token:', error);
+        return null;
+      }
+    }
+    
+    // For production, user info will be fetched async via getUserAsync
+    // Return null here as this is a sync method
+    return null;
+  }
+  
+  /**
+   * Get user info asynchronously (for production with httpOnly cookies)
+   */
+  static async getUserAsync(): Promise<SSOUser | null> {
+    // For localhost, use sync method
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    if (isLocalhost) {
+      return this.getUser();
+    }
+    
+    // For production, call /auth/me which has access to httpOnly cookies
     try {
-      const payload = JSON.parse(atob(tokens.idToken.split('.')[1]));
+      const response = await fetch(`${this.API_BASE_URL}/auth/me`, {
+        method: 'GET',
+        credentials: 'include', // Important: send cookies
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        console.error('[SSO] Failed to fetch user from /auth/me:', response.status);
+        return null;
+      }
+      
+      const data = await response.json();
+      const user = data.user;
+      
       return {
-        sub: payload.sub,
-        email: payload.email,
-        email_verified: payload.email_verified,
-        name:
-          payload.name ||
-          `${payload.given_name || ''} ${payload.family_name || ''}`.trim(),
-        given_name: payload.given_name,
-        family_name: payload.family_name,
-        picture: payload.picture,
+        sub: user.sub,
+        email: user.email,
+        email_verified: user.email_verified,
+        name: user.name || `${user.given_name || ''} ${user.family_name || ''}`.trim(),
+        given_name: user.given_name,
+        family_name: user.family_name,
+        picture: user.picture,
       };
     } catch (error) {
-      console.error('[SSO] Failed to parse ID token:', error);
+      console.error('[SSO] Error fetching user from /auth/me:', error);
       return null;
     }
   }

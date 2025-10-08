@@ -17,8 +17,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SSOUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const refreshUser = () => {
-    const currentUser = SSOUtils.getUser();
+  const refreshUser = async () => {
+    const currentUser = await SSOUtils.getUserAsync();
     setUser(currentUser);
   };
 
@@ -43,9 +43,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Initialize authentication
     const initAuth = async () => {
       try {
-        const { isAuthenticated, user: currentUser } =
-          await SSOUtils.initialize();
-        setUser(currentUser);
+        // Check if authenticated
+        const isAuth = SSOUtils.isAuthenticated();
+        
+        if (isAuth) {
+          // Get user info asynchronously (works for both localhost and production)
+          const currentUser = await SSOUtils.getUserAsync();
+          setUser(currentUser);
+        } else {
+          setUser(null);
+        }
       } catch (error) {
         console.error('Auth initialization failed:', error);
         setUser(null);
