@@ -35,8 +35,20 @@ import { SSOUtils } from './sso-utils';
  * Get the current user ID from SSO
  */
 export function getCurrentUserId(): string {
+  // Try to get user from sync method (works in localhost)
   const user = SSOUtils.getUser();
-  return user?.sub || 'anonymous';
+  if (user?.sub) return user.sub;
+  
+  // In production, user info is fetched async and stored in localStorage
+  // Check localStorage for the user ID
+  if (typeof localStorage !== 'undefined') {
+    const userId = localStorage.getItem('user_id');
+    if (userId) return userId;
+  }
+  
+  // Fallback to anonymous if no user found
+  console.warn('[Config] No user ID found, using anonymous. Make sure user is authenticated.');
+  return 'anonymous';
 }
 
 /**

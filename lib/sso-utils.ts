@@ -147,7 +147,7 @@ export class SSOUtils {
       const data = await response.json();
       const user = data.user;
       
-      return {
+      const userInfo: SSOUser = {
         sub: user.sub,
         email: user.email,
         email_verified: user.email_verified,
@@ -156,6 +156,15 @@ export class SSOUtils {
         family_name: user.family_name,
         picture: user.picture,
       };
+      
+      // Store user ID in localStorage for synchronous access by API client
+      // This is needed because API calls need the userId synchronously
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('user_id', user.sub);
+        localStorage.setItem('user_email', user.email);
+      }
+      
+      return userInfo;
     } catch (error) {
       console.error('[SSO] Error fetching user from /auth/me:', error);
       return null;
